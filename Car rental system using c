@@ -1,0 +1,160 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Car {
+    int id;
+    char model[50];
+    int year;
+    int available;
+    struct Car* next;
+} Car;
+
+typedef struct Customer {
+    int id;
+    char name[50];
+    struct Customer* next;
+} Customer;
+
+typedef struct Rental {
+    int rental_id;
+    int car_id;
+    int customer_id;
+    struct Rental* next;
+} Rental;
+
+Car* carList = NULL;
+Customer* customerList = NULL;
+Rental* rentalList = NULL;
+Car* createCar(int id, char* model, int year) {
+    Car* newCar = (Car*)malloc(sizeof(Car));
+    newCar->id = id;
+    strcpy(newCar->model, model);
+    newCar->year = year;
+    newCar->available = 1;
+    newCar->next = NULL;
+    return newCar;
+}
+
+void addCar(Car* car) {
+    car->next = carList;
+    carList = car;
+}
+
+void initializeCars() {
+    addCar(createCar(1, "Toyota Corolla", 2018));
+    addCar(createCar(2, "Honda Civic", 2019));
+    addCar(createCar(3, "Ford Focus", 2017));
+}
+Rental* createRental(int rental_id, int car_id, int customer_id) {
+    Rental* newRental = (Rental*)malloc(sizeof(Rental));
+    newRental->rental_id = rental_id;
+    newRental->car_id = car_id;
+    newRental->customer_id = customer_id;
+    newRental->next = NULL;
+    return newRental;
+}
+
+void rentCar(int car_id, int customer_id) {
+    Car* car = carList;
+    while (car != NULL) {
+        if (car->id == car_id && car->available) {
+            car->available = 0;
+            Rental* rental = createRental(rand() % 1000, car_id, customer_id);
+            rental->next = rentalList;
+            rentalList = rental;
+            printf("Car rented successfully!\n");
+            return;
+        }
+        car = car->next;
+    }
+    printf("Car not available for rent.\n");
+}
+
+void returnCar(int rental_id) {
+    Rental* rental = rentalList;
+    Rental* prevRental = NULL;
+    while (rental != NULL) {
+        if (rental->rental_id == rental_id) {
+            Car* car = carList;
+            while (car != NULL) {
+                if (car->id == rental->car_id) {
+                    car->available = 1;
+                    break;
+                }
+                car = car->next;
+            }
+            if (prevRental == NULL) {
+                rentalList = rental->next;
+            } else {
+                prevRental->next = rental->next;
+            }
+            free(rental);
+            printf("Car returned successfully!\n");
+            return;
+        }
+        prevRental = rental;
+        rental = rental->next;
+    }
+    printf("Rental ID not found.\n");
+}
+void displayCars() {
+    Car* car = carList;
+    printf("Car Inventory:\n");
+    while (car != NULL) {
+        printf("ID: %d, Model: %s, Year: %d, Available: %s\n", car->id, car->model, car->year, car->available ? "Yes" : "No");
+        car = car->next;
+    }
+}
+
+void displayRentals() {
+    Rental* rental = rentalList;
+    printf("Current Rentals:\n");
+    while (rental != NULL) {
+        printf("Rental ID: %d, Car ID: %d, Customer ID: %d\n", rental->rental_id, rental->car_id, rental->customer_id);
+        rental = rental->next;
+    }
+}
+int main() {
+    initializeCars();
+
+    int choice, car_id, customer_id, rental_id;
+    
+    while (1) {
+        printf("\nCar Rental System\n");
+        printf("1. Display Cars\n");
+        printf("2. Rent Car\n");
+        printf("3. Return Car\n");
+        printf("4. Display Rentals\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                displayCars();
+                break;
+            case 2:
+                printf("Enter Car ID: ");
+                scanf("%d", &car_id);
+                printf("Enter Customer ID: ");
+                scanf("%d", &customer_id);
+                rentCar(car_id, customer_id);
+                break;
+            case 3:
+                printf("Enter Rental ID: ");
+                scanf("%d", &rental_id);
+                returnCar(rental_id);
+                break;
+            case 4:
+                displayRentals();
+                break;
+            case 5:
+                exit(0);
+            default:
+                printf("Invalid choice.\n");
+        }
+    }
+
+    return 0;
+}
